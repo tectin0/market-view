@@ -1,0 +1,12 @@
+[package]
+name = "market-view"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+egui = "0.26.2"
+tokio = { version = "1.36.0", features = ["rt", "rt-multi-thread", "macros"] }
+tokio-test = "0.4.3"
+yahoo_finance_api = "2.1.0"
