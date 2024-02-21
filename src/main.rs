@@ -1,17 +1,14 @@
-use yahoo_finance_api as yahoo;
+mod app;
+mod requests;
 
 #[tokio::main]
 async fn main() {
-    let provider = yahoo::YahooConnector::new();
+    let native_options = eframe::NativeOptions::default();
 
-    let response = provider.get_latest_quotes("AAPL", "1d");
-
-    match response.await {
-        Ok(yresponse) => {
-            println!("Response: {:?}", yresponse);
-        }
-        Err(e) => {
-            println!("Error: {}", e);
-        }
-    }
+    eframe::run_native(
+        "Market View",
+        native_options,
+        Box::new(|cc| Box::new(app::App::new(&cc))),
+    )
+    .expect("Failed to run native");
 }
