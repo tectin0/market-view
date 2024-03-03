@@ -1,4 +1,5 @@
 mod app;
+mod plotter;
 mod requests;
 
 #[tokio::main]
