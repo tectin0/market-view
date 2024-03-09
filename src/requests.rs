@@ -1,7 +1,7 @@
 use std::ops::Add;
 use std::sync::{Arc, Mutex};
 
-use anyhow::Context;
+
 use yahoo_finance_api::time::Duration;
 use yahoo_finance_api::{time::OffsetDateTime, YQuoteItem, YahooConnector};
 
@@ -36,7 +36,7 @@ pub async fn get_history(
             let close: Vec<f64> = quotes.iter().map(|quote| quote.close).collect();
 
             *selected_symbol_history.lock().unwrap() =
-                Some(close.iter().map(|v| *v as f64).collect());
+                Some(close.iter().copied().collect());
         }
         Err(e) => {
             eprintln!("Error: {}", e);

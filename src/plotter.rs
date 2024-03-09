@@ -1,4 +1,4 @@
-use egui_plot::{Line, Plot, PlotPoint, PlotPoints};
+use egui_plot::{Line, Plot, PlotPoints};
 
 pub fn plot(ui: &mut egui::Ui, data: &Vec<f64>) {
     let plot_points: PlotPoints = data
