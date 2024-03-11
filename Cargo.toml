@@ -7,12 +7,16 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.80"
+chrono = "0.4.35"
 eframe = "0.26.2"
 egui = "0.26.2"
 egui_extras = "0.26.2"
 egui_plot = "0.26.2"
+futures = "0.3.30"
 itertools = "0.12.1"
+log = "0.4.21"
 rand = "0.8.5"
-tokio = { version = "1.36.0", features = ["rt", "rt-multi-thread", "macros"] }
+simple_logger = "4.3.3"
+tokio = { version = "1.36.0", features = ["rt", "rt-multi-thread", "macros", "sync"] }
 tokio-test = "0.4.3"
 yahoo_finance_api = "2.1.0"

@@ -1,29 +1,23 @@
-use std::ops::Add;
 use std::sync::{Arc, Mutex};
 
+use yahoo_finance_api::Quote;
+use yahoo_finance_api::{time::OffsetDateTime, YQuoteItem};
 
-use yahoo_finance_api::time::Duration;
-use yahoo_finance_api::{time::OffsetDateTime, YQuoteItem, YahooConnector};
+use crate::app::CONNECTOR;
 
-pub async fn search(
-    yahoo_connector: &YahooConnector,
-    symbol: &str,
-) -> anyhow::Result<Vec<YQuoteItem>> {
-    let response = yahoo_connector.search_ticker(symbol).await;
+pub async fn search(symbol: &str) -> anyhow::Result<Vec<YQuoteItem>> {
+    let response = CONNECTOR.search_ticker(symbol).await;
 
     Ok(response?.quotes)
 }
 
 pub async fn get_history(
-    yahoo_connector: Arc<YahooConnector>,
     symbol: String,
-    selected_symbol_history: Arc<Mutex<Option<Vec<f64>>>>,
+    selected_symbol_history: Arc<Mutex<Option<Vec<Quote>>>>,
+    start: OffsetDateTime,
+    end: OffsetDateTime,
 ) {
-    let start: OffsetDateTime = OffsetDateTime::now_utc().add(Duration::days(-7 * 7));
-
-    let end: OffsetDateTime = OffsetDateTime::now_utc();
-
-    match yahoo_connector.get_quote_history(&symbol, start, end).await {
+    match CONNECTOR.get_quote_history(&symbol, start, end).await {
         Ok(history) => {
             let quotes = match history.quotes() {
                 Ok(quotes) => quotes,
@@ -33,10 +27,7 @@ pub async fn get_history(
                 }
             };
 
-            let close: Vec<f64> = quotes.iter().map(|quote| quote.close).collect();
-
-            *selected_symbol_history.lock().unwrap() =
-                Some(close.iter().copied().collect());
+            *selected_symbol_history.lock().unwrap() = Some(quotes);
         }
         Err(e) => {
             eprintln!("Error: {}", e);

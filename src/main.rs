@@ -1,13 +1,19 @@
+#![feature(lazy_cell)]
+
 use eframe::NativeOptions;
 use egui::ViewportBuilder;
 
 mod app;
-mod plotter;
 mod requests;
+mod storage;
 mod windows;
 
-#[tokio::main]
-async fn main() {
+fn main() {
+    let _ = simple_logger::SimpleLogger::new()
+        .with_level(log::LevelFilter::Info)
+        .with_module_level("market_view", log::LevelFilter::Debug)
+        .init();
+
     let native_options = NativeOptions {
         viewport: ViewportBuilder::default()
             .with_maximized(true)

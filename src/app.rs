@@ -1,15 +1,29 @@
 use std::sync::Arc;
+use std::sync::LazyLock;
 use std::sync::Mutex;
 
 use egui::Vec2;
+
 use yahoo_finance_api::YahooConnector;
 
+use crate::storage::Storage;
 use crate::windows::PlotWindow;
 use crate::windows::SearchWindow;
 use crate::windows::ViewWindow;
 
+pub static CONNECTOR: LazyLock<YahooConnector> = LazyLock::new(|| YahooConnector::new());
+
+pub static STORAGE: LazyLock<Storage> = LazyLock::new(|| Storage::default());
+
+pub static RUNTIME: LazyLock<tokio::runtime::Runtime> = LazyLock::new(|| {
+    tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(4)
+        .enable_all()
+        .build()
+        .unwrap()
+});
+
 pub struct App {
-    yahoo_connector: Arc<YahooConnector>,
     search_window: SearchWindow,
     plot_windows: Arc<Mutex<Vec<PlotWindow>>>,
 }
@@ -22,14 +36,13 @@ impl App {
 
 impl Default for App {
     fn default() -> Self {
-        let yahoo_connector = Arc::new(YahooConnector::new());
-
         let plot_windows = Arc::new(Mutex::new(Vec::new()));
 
-        let search_window = SearchWindow::new(plot_windows.clone(), yahoo_connector.clone());
+        let search_window = SearchWindow::new(plot_windows.clone());
+
+        STORAGE.update_quotes_checked("NIO");
 
         App {
-            yahoo_connector,
             search_window,
             plot_windows,
         }
