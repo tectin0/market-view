@@ -1,14 +1,24 @@
 use anyhow::Context;
-use egui_plot::{BoxElem, BoxPlot, BoxSpread, CoordinatesFormatter, Corner, Plot};
+use egui::Sense;
+use egui_plot::{
+    BoxElem, BoxPlot, BoxSpread, CoordinatesFormatter, Corner, Line, Plot, PlotPoints,
+};
 use yahoo_finance_api::Quote;
 
 use super::ViewWindow;
+
+struct LineInfo {
+    start: [f64; 2],
+    end: [f64; 2],
+    is_fixed: bool,
+}
 
 pub struct PlotWindow {
     symbol: String,
     quotes: Vec<Quote>,
     id: String,
     request_close: bool,
+    line_info: Option<LineInfo>,
 }
 
 impl PlotWindow {
@@ -24,6 +34,7 @@ impl PlotWindow {
             quotes,
             id,
             request_close: false,
+            line_info: None,
         }
     }
 
@@ -73,7 +84,11 @@ impl ViewWindow for PlotWindow {
                         }),
                     );
 
-                plot.show(ui, |ui| {
+                let mut transform = None;
+
+                let plot_response = plot.show(ui, |ui| {
+                    transform = Some(*ui.transform());
+
                     let boxplot = BoxPlot::new(
                         self.quotes
                             .iter()
@@ -133,7 +148,70 @@ impl ViewWindow for PlotWindow {
                     }));
 
                     ui.box_plot(boxplot);
-                })
+
+                    if let Some(line_info) = &self.line_info {
+                        ui.line(Line::new(PlotPoints::new(
+                            [line_info.start, line_info.end]
+                                .iter()
+                                .map(|pos| [pos[0], pos[1]])
+                                .collect::<Vec<_>>(),
+                        )))
+                    }
+                });
+
+                let plot_rect = plot_response.response.rect;
+
+                let hover_pos = plot_response.response.hover_pos();
+
+                if plot_response.response.clicked() {
+                    match &mut self.line_info {
+                        None => {
+                            log::debug!("Drag started");
+                            if let Some(screen_pos) = hover_pos {
+                                log::debug!("Clicked at {:?}", screen_pos);
+
+                                let plot_pos = match transform {
+                                    Some(transform) => transform.value_from_position(screen_pos),
+                                    None => return,
+                                };
+
+                                self.line_info = Some(LineInfo {
+                                    start: [plot_pos.x, plot_pos.y],
+                                    end: [plot_pos.x, plot_pos.y],
+                                    is_fixed: false,
+                                });
+                            }
+                        }
+                        Some(line_info) => {
+                            log::debug!("Drag ended");
+                            if let Some(screen_pos) = hover_pos {
+                                log::debug!("Clicked at {:?}", screen_pos);
+
+                                let plot_pos = match transform {
+                                    Some(transform) => transform.value_from_position(screen_pos),
+                                    None => return,
+                                };
+
+                                line_info.end = [plot_pos.x, plot_pos.y];
+
+                                line_info.is_fixed = true;
+                            }
+                        }
+                    }
+                }
+
+                if let Some(line_info) = &mut self.line_info {
+                    if !line_info.is_fixed {
+                        if let Some(screen_pos) = hover_pos {
+                            let plot_pos = match transform {
+                                Some(transform) => transform.value_from_position(screen_pos),
+                                None => return,
+                            };
+
+                            line_info.end = [plot_pos.x, plot_pos.y];
+                        }
+                    }
+                }
             })
             .unwrap()
             .response
