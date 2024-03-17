@@ -1,3 +1,4 @@
+use anyhow::Context;
 use egui_plot::{BoxElem, BoxPlot, BoxSpread, CoordinatesFormatter, Corner, Plot};
 use yahoo_finance_api::Quote;
 
@@ -7,6 +8,7 @@ pub struct PlotWindow {
     symbol: String,
     quotes: Vec<Quote>,
     id: String,
+    request_close: bool,
 }
 
 impl PlotWindow {
@@ -17,7 +19,20 @@ impl PlotWindow {
             .as_secs()
             .to_string();
 
-        PlotWindow { symbol, quotes, id }
+        PlotWindow {
+            symbol,
+            quotes,
+            id,
+            request_close: false,
+        }
+    }
+
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+
+    pub fn is_request_close(&self) -> bool {
+        self.request_close
     }
 }
 
@@ -119,6 +134,12 @@ impl ViewWindow for PlotWindow {
 
                     ui.box_plot(boxplot);
                 })
+            })
+            .unwrap()
+            .response
+            .double_clicked()
+            .then(|| {
+                self.request_close = true;
             });
     }
 }

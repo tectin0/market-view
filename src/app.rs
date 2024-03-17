@@ -82,8 +82,21 @@ impl eframe::App for App {
         egui::CentralPanel::default().show(ctx, |ui| {
             self.search_window.view(ui);
 
+            let mut window_id_to_remove = None;
+
             for plot_window in self.plot_windows.lock().unwrap().iter_mut() {
-                plot_window.view(ui);
+                if !plot_window.is_request_close() {
+                    plot_window.view(ui);
+                } else {
+                    window_id_to_remove = Some(plot_window.id().to_string());
+                }
+            }
+
+            if let Some(window_id_to_remove) = window_id_to_remove {
+                self.plot_windows
+                    .lock()
+                    .unwrap()
+                    .retain(|plot_window| plot_window.id() != window_id_to_remove);
             }
         });
     }
